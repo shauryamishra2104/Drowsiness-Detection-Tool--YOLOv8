@@ -1,0 +1,9 @@
+streamlit
+
+streamlit-webrtc
+twilio
+av==14.3.0
+aiortc
+ultralytics
+opencv-python-headless   # NOT opencv-python — GUI build fails on cloud
+torch --index-url https://download.pytorch.org/whl/cpu   # CPU-only, cloud has no GPU

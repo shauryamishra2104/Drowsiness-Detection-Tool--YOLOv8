@@ -1,0 +1,67 @@
+import streamlit as st
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
+from detector.video_processor import DrowsinessVideoProcessor
+from static.style import load_detector_css
+from static.audio_alert import play_alert_sound
+from functools import partial
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+from twilio.rest import Client
+
+def get_ice_servers():
+    account_sid = os.environ["TWILIO_ACCOUNT_SID"]
+    auth_token = os.environ["TWILIO_AUTH_TOKEN"]
+    client = Client(account_sid, auth_token)
+    token = client.tokens.create()
+    return token.ice_servers
+
+RTC_CONFIG = RTCConfiguration({"iceServers": get_ice_servers()})
+
+@st.cache_resource
+def load_model():
+    from ultralytics import YOLO
+    import torch
+    model = YOLO("models/best.pt")
+    if torch.cuda.is_available():
+        model.to("cuda")
+    return model
+
+
+def detector_page():
+    load_detector_css()
+    username = st.session_state.get("username")
+    st.title(f"Hii!! {username}")
+    st.divider()
+    st.write("### Live Camera Feed")
+
+    model = load_model()  # loaded once, in main thread, cached across reruns
+
+    ctx = webrtc_streamer(
+        key="Drowsiness-detection",
+        video_processor_factory=partial(DrowsinessVideoProcessor, model=model),
+        mode=WebRtcMode.SENDRECV,
+        rtc_configuration=RTC_CONFIG,
+        media_stream_constraints={"video": True, "audio": False},
+        async_processing=True,
+    )
+    
+    if ctx.video_processor:
+        if ctx.video_processor.sleep_counter == CLOSED_CONSECUTIVE_FRAMES:
+            play_alert_sound(frequency=1000, duration_ms=1500)
+        elif ctx.video_processor.yawn_counter == YAWN_CONSECUTIVE_FRAMES:
+            play_alert_sound(frequency=800, duration_ms=500)
+
+    st.markdown(
+        """
+        <div style="border: 6px dashed #444; padding: 48px 32px; text-align: center; color: #888; margin-top: 32px;">
+            <h2 style="color:#ccc; margin-bottom:8px;">Keep Face In Front Of Camera</h2>
+            <p style="font-size:1.05rem;">Click <strong>START</strong> to activate camera and AI Detector Tool</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    if st.button("Logout", key="logout button"):
+        st.session_state["login"] = "Home"
+        st.rerun()

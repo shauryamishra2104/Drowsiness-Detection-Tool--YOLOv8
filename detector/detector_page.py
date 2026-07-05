@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
 from detector.video_processor import DrowsinessVideoProcessor, CLOSED_CONSECUTIVE_FRAMES, YAWN_CONSECUTIVE_FRAMES
 from static.style import load_detector_css
@@ -43,7 +44,7 @@ def detector_page():
             st.session_state["audio_unlocked"] = True
 
     RTC_CONFIG= RTCConfiguration({"iceServers": get_ice_servers()})
-    
+
     ctx = webrtc_streamer(
         key="Drowsiness-detection",
         video_processor_factory=partial(DrowsinessVideoProcessor, model=model),

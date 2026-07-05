@@ -34,7 +34,7 @@ def detector_page():
     st.write("### Live Camera Feed")
 
     model = load_model()  # loaded once, in main thread, cached across reruns
-    
+
     if "audio_unlocked" not in st.session_state:
         st.session_state["audio_unlocked"] = False
     if not st.session_state["audio_unlocked"]:
@@ -43,6 +43,7 @@ def detector_page():
             st.session_state["audio_unlocked"] = True
 
     RTC_CONFIG= RTCConfiguration({"iceServers": get_ice_servers()})
+    
     ctx = webrtc_streamer(
         key="Drowsiness-detection",
         video_processor_factory=partial(DrowsinessVideoProcessor, model=model),
@@ -52,11 +53,27 @@ def detector_page():
         async_processing=True,
     )
     
+
+    if "alerted_sleep" not in st.session_state:
+        st.session_state["alerted_sleep"] = False
+    if "alerted_yawn" not in st.session_state:
+        st.session_state["alerted_yawn"] = False
+
     if ctx.video_processor:
-        if ctx.video_processor.sleep_counter == CLOSED_CONSECUTIVE_FRAMES:
-            play_alert_sound(frequency=1000, duration_ms=1500)
-        elif ctx.video_processor.yawn_counter == YAWN_CONSECUTIVE_FRAMES:
-            play_alert_sound(frequency=800, duration_ms=500)
+        if ctx.video_processor.sleep_counter >= CLOSED_CONSECUTIVE_FRAMES:
+            if not st.session_state["alerted_sleep"]:
+                play_alert_sound(frequency=1000, duration_ms=1500)
+                st.session_state["alerted_sleep"] = True
+        else:
+            st.session_state["alerted_sleep"] = False
+
+        if ctx.video_processor.yawn_counter >= YAWN_CONSECUTIVE_FRAMES:
+            if not st.session_state["alerted_yawn"]:
+                play_alert_sound(frequency=800, duration_ms=500)
+                st.session_state["alerted_yawn"] = True
+        else:
+            st.session_state["alerted_yawn"] = False
+
 
     st.markdown(
         """

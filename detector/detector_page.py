@@ -34,6 +34,14 @@ def detector_page():
     st.write("### Live Camera Feed")
 
     model = load_model()  # loaded once, in main thread, cached across reruns
+    
+    if "audio_unlocked" not in st.session_state:
+        st.session_state["audio_unlocked"] = False
+    if not st.session_state["audio_unlocked"]:
+        if st.button("🔊 Enable Sound Alerts"):
+            play_alert_sound(frequency=440, duration_ms=200)  # test beep, unlocks audio
+            st.session_state["audio_unlocked"] = True
+
     RTC_CONFIG= RTCConfiguration({"iceServers": get_ice_servers()})
     ctx = webrtc_streamer(
         key="Drowsiness-detection",

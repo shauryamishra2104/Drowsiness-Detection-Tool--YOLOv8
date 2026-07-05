@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
 from detector.video_processor import DrowsinessVideoProcessor, CLOSED_CONSECUTIVE_FRAMES, YAWN_CONSECUTIVE_FRAMES
-from detector.video_processor import DrowsinessVideoProcessor
 from static.style import load_detector_css
 from static.audio_alert import play_alert_sound
 from functools import partial

@@ -1,5 +1,6 @@
 streamlit
 streamlit-webrtc
+tornado
 av==14.2.0
 aiortc
 twilio

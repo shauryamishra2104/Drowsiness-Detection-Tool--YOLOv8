@@ -29,6 +29,7 @@ def load_model():
 
 def detector_page():
     load_detector_css()
+    st_autorefresh(interval=1000, key="detector_refresh")
     username = st.session_state.get("username")
     st.title(f"Hii!! {username}")
     st.divider()

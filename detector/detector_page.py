@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
+from detector.video_processor import DrowsinessVideoProcessor, CLOSED_CONSECUTIVE_FRAMES, YAWN_CONSECUTIVE_FRAMES
 from detector.video_processor import DrowsinessVideoProcessor
 from static.style import load_detector_css
 from static.audio_alert import play_alert_sound
@@ -8,14 +9,13 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 from twilio.rest import Client
 
+@st.cache_data(ttl=3000)
 def get_ice_servers():
-    account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-    auth_token = os.environ["TWILIO_AUTH_TOKEN"]
+    account_sid = st.secrets["TWILIO_ACCOUNT_SID"]
+    auth_token = st.secrets["TWILIO_AUTH_TOKEN"]
     client = Client(account_sid, auth_token)
     token = client.tokens.create()
     return token.ice_servers
-
-RTC_CONFIG = RTCConfiguration({"iceServers": get_ice_servers()})
 
 @st.cache_resource
 def load_model():
@@ -35,7 +35,7 @@ def detector_page():
     st.write("### Live Camera Feed")
 
     model = load_model()  # loaded once, in main thread, cached across reruns
-
+    RTC_CONFIG= RTCConfiguration({"iceServers": get_ice_servers()})
     ctx = webrtc_streamer(
         key="Drowsiness-detection",
         video_processor_factory=partial(DrowsinessVideoProcessor, model=model),

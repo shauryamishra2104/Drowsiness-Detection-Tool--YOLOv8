@@ -39,7 +39,7 @@ class DrowsinessVideoProcessor(VideoProcessorBase):
                 if label == "close" and confidence >= 0.5:
                     eye_closed = True
 
-                elif label == "yawn" and confidence >= 0.12:
+                elif label == "yawn" and confidence >= 0.08:
                     yawning = True
 
         if eye_closed:
